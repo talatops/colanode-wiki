@@ -21,27 +21,17 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /app
 
-# Copy package files for better caching
-COPY package*.json ./
-COPY packages/core/package*.json ./packages/core/
-COPY packages/crdt/package*.json ./packages/crdt/
-COPY apps/desktop/package*.json ./apps/desktop/
+# Copy the entire project for workspace setup
+COPY . .
 
-# Install dependencies with specific flags for faster installation
-RUN npm install --no-audit --no-fund --ignore-scripts && \
-    npm install --prefix packages/core --no-audit --no-fund && \
-    npm install --prefix packages/crdt --no-audit --no-fund && \
-    npm install --prefix apps/desktop --no-audit --no-fund
+# Enable workspace feature and install dependencies
+RUN npm install -g npm@latest && \
+    npm install --no-audit --no-fund --workspaces=false
 
-# Copy source files and configs
-COPY packages/core packages/core
-COPY packages/crdt packages/crdt
-COPY apps/desktop apps/desktop
-COPY tsconfig.base.json ./
-
-# Build dependencies
-RUN cd packages/core && npm run build && cd ../.. && \
-    cd packages/crdt && npm run build && cd ../..
+# Build dependencies in correct order
+RUN cd packages/core && npm run build && \
+    cd ../crdt && npm run build && \
+    cd ../../apps/desktop && npm run build
 
 # Set environment variables
 ENV DISPLAY=:99
