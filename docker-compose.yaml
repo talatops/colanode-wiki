@@ -67,6 +67,31 @@ services:
     networks:
       - colanode_network
 
+  desktop:
+    build:
+      context: .
+      dockerfile: apps/desktop/Dockerfile
+    image: colanode_desktop
+    container_name: colanode_desktop
+    environment:
+      - NODE_ENV=development
+      - DEBUG=colanode:*
+    ports:
+      - '3001:3000'  # Changed to 3001 to avoid conflict with server
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/apps/desktop/node_modules
+      - /app/packages/core/node_modules
+      - /app/packages/crdt/node_modules
+    privileged: true
+    devices:
+      - /dev/dri:/dev/dri
+    depends_on:
+      - server
+    networks:
+      - colanode_network
+
 volumes:
   postgres_data:
   redis_data:
