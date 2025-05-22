@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json.schemastore.org/package.json",
+  "name": "@colanode/core",
+  "version": "1.0.0",
+  "type": "module",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "files": [
+    "src"
+  ],
+  "scripts": {
+    "compile": "tsc --noEmit",
+    "test": "vitest",
+    "lint": "eslint src --ext .ts --max-warnings 0",
+    "build": "tsc",
+    "coverage": "vitest run --coverage "
+  },
+  "dependencies": {
+    "fractional-indexing-jittered": "^1.0.0",
+    "ulid": "^3.0.0",
+    "zod": "^3.24.3"
+  }
+}

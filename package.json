@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json.schemastore.org/package.json",
+  "name": "colanode",
+  "description": "Colanode monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "apps/*",
+    "scripts"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/colanode/colanode"
+  },
+  "packageManager": "npm@10.9.0",
+  "scripts": {
+    "compile": "turbo run compile",
+    "build": "turbo run build",
+    "clean": "turbo run clean",
+    "dev": "turbo run dev",
+    "watch": "turbo watch build --filter=@colanode/{core,crdt,server}",
+    "lint": "turbo run lint --parallel",
+    "test": "turbo run test -- --watch false",
+    "format": "prettier --write .",
+    "postinstall": "node --no-warnings --loader ts-node/esm scripts/src/postinstall/index.ts"
+  },
+  "devDependencies": {
+    "@types/debug": "^4.1.12",
+    "@types/lodash-es": "^4.17.12",
+    "@typescript-eslint/eslint-plugin": "^8.31.1",
+    "@typescript-eslint/parser": "^8.31.1",
+    "eslint": "^8.57.1",
+    "eslint-config-prettier": "^10.1.2",
+    "eslint-plugin-import": "^2.31.0",
+    "eslint-plugin-react": "^7.37.5",
+    "prettier": "^3.5.3",
+    "ts-node": "^10.9.2",
+    "turbo": "^2.5.2",
+    "typescript": "^5.8.3",
+    "vitest": "^3.1.2"
+  },
+  "dependencies": {
+    "debug": "^4.3.7",
+    "lodash-es": "^4.17.21"
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "display": "Desktop",
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "module": "commonjs",
+    "noImplicitAny": true,
+    "sourceMap": true,
+    "outDir": "dist",
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "jsx": "react-jsx",
+    "paths": {
+      "@/*": ["src/*"]
+    },
+  },
+  "references": [
+    { "path": "../../packages/core/tsconfig.json" },
+    { "path": "../../packages/crdt/tsconfig.json" }
+  ],
+  "include": ["src", "forge.env.d.ts"]
+}
