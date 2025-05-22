@@ -1,10 +1,7 @@
 FROM node:20-alpine
 
-# Add necessary repositories
-RUN apk add --no-cache --update-cache \
-    --repository http://dl-cdn.alpinelinux.org/alpine/edge/main \
-    --repository http://dl-cdn.alpinelinux.org/alpine/edge/community \
-    --repository http://dl-cdn.alpinelinux.org/alpine/edge/testing \
+# Add necessary repositories and install system dependencies
+RUN apk add --no-cache --update \
     git \
     python3 \
     build-base \
@@ -14,15 +11,16 @@ RUN apk add --no-cache --update-cache \
     jpeg-dev \
     pango-dev \
     giflib-dev \
+    libx11-dev \
     libxkbfile-dev \
     libsecret-dev \
-    libx11-dev \
-    xvfb-run \
+    xvfb \
     xorg-server \
     eudev \
-    ttf-freefont \
+    freetype \
+    freetype-dev \
+    mesa-dev \
     mesa-dri-gallium \
-    mesa-gl \
     libxext-dev \
     libxrender-dev \
     libxtst-dev \
@@ -31,7 +29,6 @@ RUN apk add --no-cache --update-cache \
     libxdamage-dev \
     libxcomposite-dev \
     libxi-dev \
-    libxss-dev \
     libxtst \
     xauth \
     && rm -rf /var/cache/apk/*
