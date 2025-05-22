@@ -1,16 +1,40 @@
 FROM node:20-alpine
 
-# Install system dependencies required for Electron
-RUN apk add --no-cache \
+# Add necessary repositories
+RUN apk add --no-cache --update-cache \
+    --repository http://dl-cdn.alpinelinux.org/alpine/edge/main \
+    --repository http://dl-cdn.alpinelinux.org/alpine/edge/community \
+    --repository http://dl-cdn.alpinelinux.org/alpine/edge/testing \
     git \
     python3 \
-    make \
+    build-base \
+    gcc \
     g++ \
-    libx11-dev \
+    cairo-dev \
+    jpeg-dev \
+    pango-dev \
+    giflib-dev \
     libxkbfile-dev \
     libsecret-dev \
+    libx11-dev \
+    xvfb-run \
     xorg-server \
-    xvfb
+    eudev \
+    ttf-freefont \
+    mesa-dri-gallium \
+    mesa-gl \
+    libxext-dev \
+    libxrender-dev \
+    libxtst-dev \
+    libxcursor-dev \
+    libxrandr-dev \
+    libxdamage-dev \
+    libxcomposite-dev \
+    libxi-dev \
+    libxss-dev \
+    libxtst \
+    xauth \
+    && rm -rf /var/cache/apk/*
 
 WORKDIR /app
 
