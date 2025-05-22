@@ -30,8 +30,7 @@ RUN npm install -g npm@latest && \
 
 # Build dependencies in correct order
 RUN cd packages/core && npm run build && \
-    cd ../crdt && npm run build && \
-    cd ../../apps/desktop && npm run build
+    cd ../crdt && npm run build
 
 # Set environment variables
 ENV DISPLAY=:99
@@ -39,8 +38,10 @@ ENV ELECTRON_DISABLE_SANDBOX=1
 ENV ELECTRON_NO_ATTACH_CONSOLE=1
 
 # Create a script to run Xvfb and the app
-RUN echo '#!/bin/sh\nXvfb :99 -screen 0 1024x768x16 & npm run dev --prefix apps/desktop' > /app/start.sh && \
-    chmod +x /app/start.sh
+RUN echo '#!/bin/bash' > /app/start.sh
+RUN echo 'Xvfb :99 -screen 0 1024x768x16 &' >> /app/start.sh
+RUN echo 'npm run dev --prefix apps/desktop' >> /app/start.sh
+RUN chmod +x /app/start.sh
 
 WORKDIR /app/apps/desktop
 
