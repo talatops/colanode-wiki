@@ -1,50 +1,37 @@
-FROM node:20-alpine
+FROM node:20-slim
 
-# Add necessary repositories and install system dependencies
-RUN apk add --no-cache --update \
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
     git \
     python3 \
-    build-base \
-    gcc \
-    g++ \
-    cairo-dev \
-    jpeg-dev \
-    pango-dev \
-    giflib-dev \
+    build-essential \
     libx11-dev \
     libxkbfile-dev \
-    libsecret-dev \
+    libsecret-1-dev \
     xvfb \
-    xorg-server \
-    eudev \
-    freetype \
-    freetype-dev \
-    mesa-dev \
-    mesa-dri-gallium \
-    libxext-dev \
-    libxrender-dev \
-    libxtst-dev \
-    libxcursor-dev \
-    libxrandr-dev \
-    libxdamage-dev \
-    libxcomposite-dev \
-    libxi-dev \
-    libxtst \
-    xauth \
-    && rm -rf /var/cache/apk/*
+    xorg \
+    libnss3-dev \
+    libatk1.0-0 \
+    libatk-bridge2.0-0 \
+    libgdk-pixbuf2.0-0 \
+    libgtk-3-0 \
+    libgbm-dev \
+    libasound2 \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-# Copy root workspace files
-COPY package.json package-lock.json ./
+# Copy package files for better caching
+COPY package*.json ./
+COPY packages/core/package*.json ./packages/core/
+COPY packages/crdt/package*.json ./packages/crdt/
+COPY apps/desktop/package*.json ./apps/desktop/
 
-# Copy all package.json files first for better caching
-COPY packages/core/package.json packages/core/package.json
-COPY packages/crdt/package.json packages/crdt/package.json
-COPY apps/desktop/package.json apps/desktop/package.json
-
-# Install dependencies
-RUN npm install
+# Install dependencies with specific flags for faster installation
+RUN npm install --no-audit --no-fund --ignore-scripts && \
+    npm install --prefix packages/core --no-audit --no-fund && \
+    npm install --prefix packages/crdt --no-audit --no-fund && \
+    npm install --prefix apps/desktop --no-audit --no-fund
 
 # Copy source files and configs
 COPY packages/core packages/core
@@ -59,6 +46,7 @@ RUN cd packages/core && npm run build && cd ../.. && \
 # Set environment variables
 ENV DISPLAY=:99
 ENV ELECTRON_DISABLE_SANDBOX=1
+ENV ELECTRON_NO_ATTACH_CONSOLE=1
 
 # Create a script to run Xvfb and the app
 RUN echo '#!/bin/sh\nXvfb :99 -screen 0 1024x768x16 & npm run dev --prefix apps/desktop' > /app/start.sh && \
