@@ -31,51 +31,17 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
 
-      - name: Prepare directories
+      - name: Prepare and copy files
         run: |
-          ssh -i ~/.ssh/id_rsa ubuntu@${{ secrets.EC2_HOST }} << 'ENDSSH'
-          # Ensure directories exist
-          sudo mkdir -p ${{ env.REMOTE_DIR }}
-          sudo chown -R ubuntu:ubuntu ${{ env.REMOTE_DIR }}
-          # Clean up existing files if any
-          rm -rf ${{ env.REMOTE_DIR }}/*
-          ENDSSH
-
-      - name: Copy files to server
-        run: |
-          # Create a tar of the current directory excluding node_modules and other unnecessary files
-          tar --exclude='node_modules' --exclude='.git' -czf deploy.tar.gz .
-          # Copy the tar file to the server
-          scp -i ~/.ssh/id_rsa deploy.tar.gz ubuntu@${{ secrets.EC2_HOST }}:${{ env.REMOTE_DIR }}/
-          # Extract the files on the server
-          ssh -i ~/.ssh/id_rsa ubuntu@${{ secrets.EC2_HOST }} << 'ENDSSH'
-          cd ${{ env.REMOTE_DIR }}
-          tar -xzf deploy.tar.gz
-          rm deploy.tar.gz
-          ENDSSH
+          ssh -i ~/.ssh/id_rsa ubuntu@${{ secrets.EC2_HOST }} "mkdir -p ${{ env.REMOTE_DIR }}"
+          scp -i ~/.ssh/id_rsa -r ./* .env ubuntu@${{ secrets.EC2_HOST }}:${{ env.REMOTE_DIR }}/
 
       - name: Deploy
         run: |
           ssh -i ~/.ssh/id_rsa ubuntu@${{ secrets.EC2_HOST }} << 'ENDSSH'
-          set -e
           cd ${{ env.REMOTE_DIR }}
-          # Setup docker permissions
-          sudo groupadd -f docker
-          sudo usermod -aG docker ubuntu
-          sudo chmod 666 /var/run/docker.sock
-          # Build and start containers
-          echo "Building and starting containers..."
-          docker-compose build
-          docker-compose up -d
-          # Wait for containers to start
-          echo "Waiting for containers to start..."
-          sleep 15
-          # Verify deployment
-          if ! docker-compose ps | grep -q "Up"; then
-            echo "Container verification failed!"
-            exit 1
-          fi
-          echo "Deployment successful!"
+          docker-compose down --remove-orphans
+          docker-compose up -d --build
           ENDSSH
 
       - name: Cleanup
