@@ -1,0 +1,79 @@
+name: Deploy to EC2
+
+env:
+  REMOTE_DIR: /home/ubuntu/outline
+
+on:
+  push:
+    branches: [ main ]
+    paths-ignore:
+      - '*.md'
+      - '.gitignore'
+      - 'docs/'
+      - 'README.md'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up environment
+        run: |
+          echo "${{ secrets.EC2_ENV }}" > .env
+      
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.EC2_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Prepare directories
+        run: |
+          ssh -i ~/.ssh/id_rsa ubuntu@${{ secrets.EC2_HOST }} << 'ENDSSH'
+          # Ensure directories exist
+          sudo mkdir -p ${{ env.REMOTE_DIR }}
+          sudo chown -R ubuntu:ubuntu ${{ env.REMOTE_DIR }}
+          ENDSSH
+
+      - name: Copy files to server
+        run: |
+          scp -i ~/.ssh/id_rsa docker-compose.yml ubuntu@${{ secrets.EC2_HOST }}:${{ env.REMOTE_DIR }}/
+          scp -i ~/.ssh/id_rsa .env ubuntu@${{ secrets.EC2_HOST }}:${{ env.REMOTE_DIR }}/
+
+      - name: Deploy
+        run: |
+          ssh -i ~/.ssh/id_rsa ubuntu@${{ secrets.EC2_HOST }} << 'ENDSSH'
+          set -e
+          cd ${{ env.REMOTE_DIR }}
+          # Setup docker permissions
+          sudo groupadd -f docker
+          sudo usermod -aG docker ubuntu
+          sudo chmod 666 /var/run/docker.sock
+          # Pull images first to avoid downtime
+          echo "Pulling new images..."
+          docker-compose pull || { echo "Failed to pull images"; exit 1; }
+          # Stop existing containers
+          docker-compose down --remove-orphans
+          # Start new containers
+          echo "Starting new containers..."
+          docker-compose up -d
+          # Wait for containers to start
+          echo "Waiting for containers to start..."
+          sleep 15
+          # Verify deployment
+          if ! docker-compose ps | grep -q "Up"; then
+            echo "Container verification failed!"
+            exit 1
+          fi
+          echo "Deployment successful!"
+          ENDSSH
+
+      - name: Cleanup
+        if: always()
+        run: |
+          rm -f ~/.ssh/id_rsa
+          rm -f .env 
