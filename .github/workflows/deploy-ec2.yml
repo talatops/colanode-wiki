@@ -41,7 +41,7 @@ jobs:
 
       - name: Copy files to server
         run: |
-          scp -i ~/.ssh/id_rsa docker-compose.yml ubuntu@${{ secrets.EC2_HOST }}:${{ env.REMOTE_DIR }}/
+          scp -i ~/.ssh/id_rsa docker-compose.yaml ubuntu@${{ secrets.EC2_HOST }}:${{ env.REMOTE_DIR }}/
           scp -i ~/.ssh/id_rsa .env ubuntu@${{ secrets.EC2_HOST }}:${{ env.REMOTE_DIR }}/
 
       - name: Deploy
