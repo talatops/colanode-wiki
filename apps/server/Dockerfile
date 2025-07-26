@@ -13,7 +13,7 @@ COPY ../../packages/core/package.json packages/core/package.json
 COPY ../../packages/crdt/package.json packages/crdt/package.json
 COPY ../../apps/server/package.json apps/server/package.json
 
-# Install dependencies and additional required packages
+# Install dependencies and additional require
 RUN npm install && \
     npm install -g typescript tsup && \
     npm install @langchain/langgraph @types/node tsconfig-paths
