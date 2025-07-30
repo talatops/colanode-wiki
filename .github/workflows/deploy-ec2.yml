@@ -58,10 +58,12 @@ jobs:
 
       # --- Discord Notification Step ---
       - name: Send Discord Notification on Failure
-        if: failure()
-        uses: tsickert/discord-webhook-action@v2
+        if: failure() # This ensures the step only runs if any previous step in this job failed
+        uses: peaceiris/actions-discord@v3 # Changed to a commonly used Discord action
         with:
-          webhook-url: ${{ secrets.DISCORD_WEBHOOK_URL_ACTIONS }} 
+          webhook_id: ${{ secrets.DISCORD_WEBHOOK_ID }} # Use ID and Token for peaceiris action
+          webhook_token: ${{ secrets.DISCORD_WEBHOOK_TOKEN }} # Separate webhook ID and Token
+          # The 'content' field is for the message body
           content: |
             🚨 **Deployment to EC2 Failed!** 🚨
             **Repository:** `${{ github.repository }}`
@@ -70,6 +72,6 @@ jobs:
             **Commit:** `${{ github.sha }}`
             **Triggered by:** `${{ github.actor }}`
             **Run URL:** `${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}`
-            Please investigate immediately! @ihatebrookley 
-          username: EC2 Deploy Bot 
-          avatar_url: https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png
+            Please investigate immediately! @ihatebrookley
+          username: EC2 Deploy Bot # Custom username for the Discord message
+          avatar_url: https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png # Custom avatar for the Discord message
