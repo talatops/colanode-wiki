@@ -72,7 +72,7 @@ jobs:
             **Commit:** `${{ github.sha }}`
             **Triggered by:** `${{ github.actor }}`
             **Run URL:** `${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}`
-            Please investigate immediately! @ihatebrookley 
+            Please investigate immediately! <@1015923238674640896> # Discord User ID for actual tagging
           # Ilshidur/action-discord@master does not directly support 'username' or 'avatar_url' as inputs.
           # These would typically be configured directly in the Discord webhook settings,
           # or by sending a JSON payload with these fields if using a custom script.
