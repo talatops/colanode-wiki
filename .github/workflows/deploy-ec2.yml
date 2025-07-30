@@ -59,7 +59,7 @@ jobs:
       # --- Discord Notification Step ---
       - name: Send Discord Notification on Failure
         if: failure() # This ensures the step only runs if any previous step in this job failed
-        uses: peaceiris/actions-discord@v3 # Changed to a commonly used Discord action
+        uses: Ilshidur/action-discord@master # Changed to a commonly used Discord action
         with:
           webhook_id: ${{ secrets.DISCORD_WEBHOOK_ID }} # Use ID and Token for peaceiris action
           webhook_token: ${{ secrets.DISCORD_WEBHOOK_TOKEN }} # Separate webhook ID and Token
