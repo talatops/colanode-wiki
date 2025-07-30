@@ -11,7 +11,7 @@ on:
       - '.gitignore'
       - 'docs/'
       - 'README.md'
-  workflow_dispatch:
+  workflow_dispatch: # Allows manual triggering from the GitHub Actions tab
 
 jobs:
   deploy:
@@ -33,19 +33,43 @@ jobs:
 
       - name: Prepare and copy files
         run: |
+          # Create the remote directory if it doesn't exist
           ssh -i ~/.ssh/id_rsa ubuntu@${{ secrets.EC2_HOST }} "mkdir -p ${{ env.REMOTE_DIR }}"
+          # Copy all files from the current directory and the .env file to the remote EC2 instance
           scp -i ~/.ssh/id_rsa -r ./* .env ubuntu@${{ secrets.EC2_HOST }}:${{ env.REMOTE_DIR }}/
 
       - name: Deploy
         run: |
+          # Connect to EC2 and execute deployment commands
           ssh -i ~/.ssh/id_rsa ubuntu@${{ secrets.EC2_HOST }} << 'ENDSSH'
           cd ${{ env.REMOTE_DIR }}
+          # Stop and remove existing Docker containers
           docker-compose down --remove-orphans
+          # Build and start new Docker containers in detached mode
           docker-compose up -d --build
           ENDSSH
 
-      - name: Cleanup
-        if: always()
+      - name: Cleanup SSH key and .env file
+        if: always() # This step will always run, even if previous steps fail
         run: |
+          # Remove sensitive files from the runner after the job completes
           rm -f ~/.ssh/id_rsa
-          rm -f .env 
+          rm -f .env
+
+      # --- Discord Notification Step ---
+      - name: Send Discord Notification on Failure
+        if: failure()
+        uses: tsickert/discord-webhook-action@v2
+        with:
+          webhook-url: ${{ secrets.DISCORD_WEBHOOK_URL_ACTIONS }} 
+          content: |
+            🚨 **Deployment to EC2 Failed!** 🚨
+            **Repository:** `${{ github.repository }}`
+            **Workflow:** `${{ github.workflow }}`
+            **Branch:** `${{ github.ref_name }}`
+            **Commit:** `${{ github.sha }}`
+            **Triggered by:** `${{ github.actor }}`
+            **Run URL:** `${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}`
+            Please investigate immediately! @ihatebrookley 
+          username: EC2 Deploy Bot 
+          avatar_url: https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png
