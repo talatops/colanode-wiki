@@ -30,7 +30,7 @@ jobs:
         run: |
           # Initialize variables
           MESSAGE=""
-          EMBEDS="[]" # Start with an empty JSON array for embeds
+          # EMBEDS="[]" # Removed as Ilshidur/action-discord@master doesn't support direct embeds input
 
           # --- Common Variables ---
           REPO_NAME="${{ github.repository }}"
@@ -49,38 +49,23 @@ jobs:
             BRANCH_NAME="${{ github.ref_name }}"
             COMPARE_URL="${{ github.event.compare }}"
 
-            MESSAGE="📢 **Code Push Alert!**"
-            EMBEDS=$(jq -n \
-              --arg repo "$REPO_NAME" \
-              --arg branch "$BRANCH_NAME" \
-              --arg actor "$ACTOR" \
-              --arg commit_msg "$COMMIT_MESSAGE" \
-              --arg commit_sha "$COMMIT_SHA_SHORT" \
-              --arg compare_url "$COMPARE_URL" \
-              '{
-                "title": "New Push to $branch",
-                "description": "**Repository:** `$repo`\n**Branch:** `$branch`\n**Pushed by:** `$actor`\n**Commit:** `$commit_sha`\n**Message:** ```\n$commit_msg\n```",
-                "url": "$compare_url",
-                "color": 5814783, # Blue color
-                "footer": {"text": "GitHub Push Notification"}
-              }' | jq -s '.') # jq -s '.' wraps the object in an array
+            MESSAGE="📢 **Code Push Alert!**\n"
+            MESSAGE+="**Repository:** `${REPO_NAME}`\n"
+            MESSAGE+="**Branch:** `${BRANCH_NAME}`\n"
+            MESSAGE+="**Pushed by:** `${ACTOR}`\n"
+            MESSAGE+="**Commit:** `${COMMIT_SHA_SHORT}`\n"
+            MESSAGE+="**Message:** ```\n${COMMIT_MESSAGE}\n```\n"
+            MESSAGE+="[View Changes](${COMPARE_URL})"
+            # EMBEDS logic removed for this action
 
           elif [[ "${{ github.event_name }}" == "create" ]]; then
             REF_TYPE="${{ github.event.ref_type }}"
             REF_NAME="${{ github.event.ref }}"
             
-            MESSAGE="✨ **New ${REF_TYPE} Created!**"
-            EMBEDS=$(jq -n \
-              --arg repo "$REPO_NAME" \
-              --arg ref_type "$REF_TYPE" \
-              --arg ref_name "$REF_NAME" \
-              --arg actor "$ACTOR" \
-              '{
-                "title": "New ${ref_type}: ${ref_name}",
-                "description": "**Repository:** `$repo`\n**Created by:** `$actor`",
-                "color": 3066993, # Green color
-                "footer": {"text": "GitHub Creation Notification"}
-              }' | jq -s '.')
+            MESSAGE="✨ **New ${REF_TYPE} Created!**\n"
+            MESSAGE+="**Repository:** `${REPO_NAME}`\n"
+            MESSAGE+="**Created by:** `${ACTOR}`"
+            # EMBEDS logic removed for this action
 
           elif [[ "${{ github.event_name }}" == "pull_request" ]]; then
             PR_ACTION="${{ github.event.action }}"
@@ -89,90 +74,64 @@ jobs:
             PR_URL="${{ github.event.pull_request.html_url }}"
             PR_MERGED="${{ github.event.pull_request.merged }}"
             
-            COLOR=16776960 # Yellow for opened/reopened
             STATUS_TEXT="opened"
             
             if [[ "$PR_ACTION" == "closed" ]]; then
               if [[ "$PR_MERGED" == "true" ]]; then
-                MESSAGE="🎉 **Pull Request Merged!**"
-                COLOR=3066993 # Green for merged
+                MESSAGE="🎉 **Pull Request Merged!**\n"
                 STATUS_TEXT="merged"
               else
-                MESSAGE="❌ **Pull Request Closed!**"
-                COLOR=15158332 # Red for closed (unmerged)
+                MESSAGE="❌ **Pull Request Closed!**\n"
                 STATUS_TEXT="closed"
               fi
             elif [[ "$PR_ACTION" == "opened" ]]; then
-              MESSAGE="🆕 **New Pull Request!**"
+              MESSAGE="🆕 **New Pull Request!**\n"
             elif [[ "$PR_ACTION" == "reopened" ]]; then
-              MESSAGE="🔄 **Pull Request Reopened!**"
+              MESSAGE="🔄 **Pull Request Reopened!**\n"
             fi
-
-            EMBEDS=$(jq -n \
-              --arg repo "$REPO_NAME" \
-              --arg pr_title "$PR_TITLE" \
-              --arg pr_number "$PR_NUMBER" \
-              --arg pr_url "$PR_URL" \
-              --arg actor "$ACTOR" \
-              --arg status_text "$STATUS_TEXT" \
-              --argjson color "$COLOR" \
-              '{
-                "title": "PR #${pr_number}: ${pr_title}",
-                "description": "**Repository:** `$repo`\n**Status:** `${status_text}` by `$actor`",
-                "url": "$pr_url",
-                "color": $color,
-                "footer": {"text": "GitHub Pull Request Notification"}
-              }' | jq -s '.')
+            
+            MESSAGE+="**PR #${PR_NUMBER}:** `${PR_TITLE}`\n"
+            MESSAGE+="**Repository:** `${REPO_NAME}`\n"
+            MESSAGE+="**Status:** `${STATUS_TEXT}` by `${ACTOR}`\n"
+            MESSAGE+="[View PR](${PR_URL})"
+            # EMBEDS logic removed for this action
 
           elif [[ "${{ github.event_name }}" == "workflow_run" ]]; then
             WORKFLOW_NAME="${{ github.event.workflow_run.name }}"
             WORKFLOW_STATUS="${{ github.event.workflow_run.conclusion }}"
             WORKFLOW_URL="${{ github.event.workflow_run.html_url }}"
             
-            COLOR=16776960 # Default yellow
             STATUS_EMOJI="🟡"
             
             if [[ "$WORKFLOW_STATUS" == "success" ]]; then
-              MESSAGE="✅ **Workflow Completed Successfully!**"
-              COLOR=3066993 # Green
+              MESSAGE="✅ **Workflow Completed Successfully!**\n"
               STATUS_EMOJI="✅"
             elif [[ "$WORKFLOW_STATUS" == "failure" ]]; then
-              MESSAGE="🚨 **Workflow Failed!** ${MENTION}" # Add mention for failures
-              COLOR=15158332 # Red
+              MESSAGE="🚨 **Workflow Failed!** ${MENTION}\n" # Add mention for failures
               STATUS_EMOJI="❌"
             elif [[ "$WORKFLOW_STATUS" == "cancelled" ]]; then
-              MESSAGE="🚫 **Workflow Cancelled!**"
-              COLOR=9807270 # Grey
+              MESSAGE="🚫 **Workflow Cancelled!**\n"
               STATUS_EMOJI="🚫"
             fi
-
-            EMBEDS=$(jq -n \
-              --arg repo "$REPO_NAME" \
-              --arg workflow_name "$WORKFLOW_NAME" \
-              --arg workflow_status "$WORKFLOW_STATUS" \
-              --arg workflow_url "$WORKFLOW_URL" \
-              --arg actor "$ACTOR" \
-              --arg status_emoji "$STATUS_EMOJI" \
-              --argjson color "$COLOR" \
-              '{
-                "title": "${status_emoji} Workflow: ${workflow_name}",
-                "description": "**Repository:** `$repo`\n**Status:** `${workflow_status}`\n**Triggered by:** `$actor`",
-                "url": "$workflow_url",
-                "color": $color,
-                "footer": {"text": "GitHub Actions Notification"}
-              }' | jq -s '.')
+            
+            MESSAGE+="${STATUS_EMOJI} **Workflow:** `${WORKFLOW_NAME}`\n"
+            MESSAGE+="**Repository:** `${REPO_NAME}`\n"
+            MESSAGE+="**Status:** `${WORKFLOW_STATUS}`\n"
+            MESSAGE+="**Triggered by:** `${ACTOR}`\n"
+            MESSAGE+="[View Run](${WORKFLOW_URL})"
+            # EMBEDS logic removed for this action
           fi
 
           # Set outputs for the next step
           echo "::set-output name=message::$MESSAGE"
-          echo "::set-output name=embeds::$EMBEDS"
+          # echo "::set-output name=embeds::$EMBEDS" # Removed output for embeds
         shell: bash
 
       - name: Send Discord Notification
         uses: Ilshidur/action-discord@master # Using the action you prefer
         if: steps.set_message.outputs.message != '' # Only send if a message was generated
         env:
-          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL_CUSTOM }} # Use the custom webhook URL secret
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL_CUSTOM }} # Pass the full webhook URL as an environment variable
         with:
           args: ${{ steps.set_message.outputs.message }} # Main message content
-          embeds: ${{ steps.set_message.outputs.embeds }} # JSON string of embeds
+          # embeds: ${{ steps.set_message.outputs.embeds }} # Removed as it's not supported by this action
