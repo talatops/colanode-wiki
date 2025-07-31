@@ -32,6 +32,9 @@ jobs:
           echo "REPO_NAME: ${{ github.repository }}"
           echo "BRANCH_NAME: ${{ github.ref_name }}"
           echo "EVENT_NAME: ${{ github.event_name }}"
+          echo "COMMIT_MESSAGE: ${{ github.event.head_commit.message }}"
+          echo "COMMIT_SHA_SHORT: ${{ github.sha }}"
+          echo "COMPARE_URL: ${{ github.event.compare }}"
           MESSAGE=""
           REPO_NAME="${{ github.repository }}"
           ACTOR="${{ github.actor }}"
@@ -50,7 +53,7 @@ jobs:
             MESSAGE+="**Pushed by:** \"${ACTOR}\"\n"
             MESSAGE+="**Commit:** \"${COMMIT_SHA_SHORT}\"\n"
             MESSAGE+="**Message:** ```\n${COMMIT_MESSAGE}\n```\n"
-            MESSAGE+="[View Changes](${COMPARE_URL})"
+            MESSAGE+="[View Changes](\"${COMPARE_URL}\")"
 
           elif [[ "${{ github.event_name }}" == "create" ]]; then
             REF_TYPE="${{ github.event.ref_type }}"
@@ -82,7 +85,7 @@ jobs:
             MESSAGE+="**PR #${PR_NUMBER}:** \"${PR_TITLE}\"\n"
             MESSAGE+="**Repository:** \"${REPO_NAME}\"\n"
             MESSAGE+="**Status:** \"${STATUS_TEXT}\" by \"${ACTOR}\"\n"
-            MESSAGE+="[View PR](${PR_URL})"
+            MESSAGE+="[View PR](\"${PR_URL}\")"
 
           elif [[ "${{ github.event_name }}" == "workflow_run" ]]; then
             WORKFLOW_NAME="${{ github.event.workflow_run.name }}"
@@ -103,7 +106,7 @@ jobs:
             MESSAGE+="**Repository:** \"${REPO_NAME}\"\n"
             MESSAGE+="**Status:** \"${WORKFLOW_STATUS}\"\n"
             MESSAGE+="**Triggered by:** \"${ACTOR}\"\n"
-            MESSAGE+="[View Run](${WORKFLOW_URL})"
+            MESSAGE+="[View Run](\"${WORKFLOW_URL}\")"
           fi
 
           echo "::set-output name=message::$MESSAGE"
