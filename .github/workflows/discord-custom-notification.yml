@@ -52,7 +52,8 @@ jobs:
             MESSAGE+="**Branch:** $BRANCH_NAME\n"
             MESSAGE+="**Pushed by:** $ACTOR\n"
             MESSAGE+="**Commit:** [$COMMIT_SHA_SHORT]($RUN_URL)\n"
-            MESSAGE+="**Message:** ```$COMMIT_MESSAGE```"
+            # Safely handle COMMIT_MESSAGE as a literal string
+            MESSAGE+="**Message:** ```\"$COMMIT_MESSAGE\"```"
 
           elif [[ "${{ github.event_name }}" == "create" ]]; then
             REF_TYPE="${{ github.event.ref_type }}"
