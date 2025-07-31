@@ -29,6 +29,9 @@ jobs:
       - name: Determine Notification Message
         id: set_message
         run: |
+          echo "REPO_NAME: ${{ github.repository }}"
+          echo "BRANCH_NAME: ${{ github.ref_name }}"
+          echo "EVENT_NAME: ${{ github.event_name }}"
           MESSAGE=""
           REPO_NAME="${{ github.repository }}"
           ACTOR="${{ github.actor }}"
@@ -42,10 +45,10 @@ jobs:
             BRANCH_NAME="${{ github.ref_name }}"
             COMPARE_URL="${{ github.event.compare }}"
             MESSAGE="📢 **Code Push Alert!**\n"
-            MESSAGE+="**Repository:** `${REPO_NAME}`\n"
-            MESSAGE+="**Branch:** `${BRANCH_NAME}`\n"
-            MESSAGE+="**Pushed by:** `${ACTOR}`\n"
-            MESSAGE+="**Commit:** `${COMMIT_SHA_SHORT}`\n"
+            MESSAGE+="**Repository:** \"${REPO_NAME}\"\n"
+            MESSAGE+="**Branch:** \"${BRANCH_NAME}\"\n"
+            MESSAGE+="**Pushed by:** \"${ACTOR}\"\n"
+            MESSAGE+="**Commit:** \"${COMMIT_SHA_SHORT}\"\n"
             MESSAGE+="**Message:** ```\n${COMMIT_MESSAGE}\n```\n"
             MESSAGE+="[View Changes](${COMPARE_URL})"
 
@@ -53,8 +56,8 @@ jobs:
             REF_TYPE="${{ github.event.ref_type }}"
             REF_NAME="${{ github.event.ref }}"
             MESSAGE="✨ **New ${REF_TYPE} Created!**\n"
-            MESSAGE+="**Repository:** `${REPO_NAME}`\n"
-            MESSAGE+="**Created by:** `${ACTOR}`"
+            MESSAGE+="**Repository:** \"${REPO_NAME}\"\n"
+            MESSAGE+="**Created by:** \"${ACTOR}\""
 
           elif [[ "${{ github.event_name }}" == "pull_request" ]]; then
             PR_ACTION="${{ github.event.action }}"
@@ -76,9 +79,9 @@ jobs:
             elif [[ "$PR_ACTION" == "reopened" ]]; then
               MESSAGE="🔄 **Pull Request Reopened!**\n"
             fi
-            MESSAGE+="**PR #${PR_NUMBER}:** `${PR_TITLE}`\n"
-            MESSAGE+="**Repository:** `${REPO_NAME}`\n"
-            MESSAGE+="**Status:** `${STATUS_TEXT}` by `${ACTOR}`\n"
+            MESSAGE+="**PR #${PR_NUMBER}:** \"${PR_TITLE}\"\n"
+            MESSAGE+="**Repository:** \"${REPO_NAME}\"\n"
+            MESSAGE+="**Status:** \"${STATUS_TEXT}\" by \"${ACTOR}\"\n"
             MESSAGE+="[View PR](${PR_URL})"
 
           elif [[ "${{ github.event_name }}" == "workflow_run" ]]; then
@@ -96,10 +99,10 @@ jobs:
               MESSAGE="🚫 **Workflow Cancelled!**\n"
               STATUS_EMOJI="🚫"
             fi
-            MESSAGE+="${STATUS_EMOJI} **Workflow:** `${WORKFLOW_NAME}`\n"
-            MESSAGE+="**Repository:** `${REPO_NAME}`\n"
-            MESSAGE+="**Status:** `${WORKFLOW_STATUS}`\n"
-            MESSAGE+="**Triggered by:** `${ACTOR}`\n"
+            MESSAGE+="${STATUS_EMOJI} **Workflow:** \"${WORKFLOW_NAME}\"\n"
+            MESSAGE+="**Repository:** \"${REPO_NAME}\"\n"
+            MESSAGE+="**Status:** \"${WORKFLOW_STATUS}\"\n"
+            MESSAGE+="**Triggered by:** \"${ACTOR}\"\n"
             MESSAGE+="[View Run](${WORKFLOW_URL})"
           fi
 
