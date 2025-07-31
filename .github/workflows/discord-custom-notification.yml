@@ -2,57 +2,45 @@ name: Custom Discord Notifications
 
 on:
   push:
-    branches: ['**'] # Trigger on all pushes to any branch
+    branches: ['**']
     paths-ignore:
       - '*.md'
       - '.gitignore'
       - 'docs/'
       - 'README.md'
-  create: # Trigger on branch or tag creation
+  create:
   pull_request:
-    types: [opened, closed, reopened] # Trigger on PR open, close (including merge), reopen
+    types: [opened, closed, reopened]
   workflow_run:
-    types: [completed] # Trigger when any workflow run completes
-    # --- FIX: Specify which workflows to listen for ---
-    workflows: ["Deploy to EC2"] # List the names of the workflows you want to monitor
+    types: [completed]
+    workflows: ["Deploy to EC2"]
 
 jobs:
   notify:
     runs-on: ubuntu-latest
-    # --- IMPORTANT: Add permissions for workflow_run ---
     permissions:
-      contents: read # Required for actions/checkout if you add steps that need repo content
-      actions: read  # Crucial: Allows this workflow to read data from other workflow runs
+      contents: read
+      actions: read
 
     steps:
-      # We don't need actions/checkout here unless we're reading files from the repo
-      # for the notification logic itself. For event-based notifications, it's not strictly necessary.
-      # - name: Checkout code
-      #   uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
       - name: Determine Notification Message
-        id: set_message # Give this step an ID to reference its outputs
+        id: set_message
         run: |
-          # Initialize variables
           MESSAGE=""
-
-          # --- Common Variables ---
-          # Use raw github context for direct access, less chance of misinterpretation
           REPO_NAME="${{ github.repository }}"
           ACTOR="${{ github.actor }}"
           RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-          
-          # Hardcoded Discord User ID for mentions
-          DISCORD_USER_ID="1015923238674640896" 
+          DISCORD_USER_ID="1015923238674640896"
           MENTION="<@${DISCORD_USER_ID}>"
 
-          # --- Handle different event types ---
           if [[ "${{ github.event_name }}" == "push" ]]; then
             COMMIT_MESSAGE="${{ github.event.head_commit.message }}"
             COMMIT_SHA_SHORT="${{ github.sha }}"
             BRANCH_NAME="${{ github.ref_name }}"
             COMPARE_URL="${{ github.event.compare }}"
-
             MESSAGE="📢 **Code Push Alert!**\n"
             MESSAGE+="**Repository:** `${REPO_NAME}`\n"
             MESSAGE+="**Branch:** `${BRANCH_NAME}`\n"
@@ -64,7 +52,6 @@ jobs:
           elif [[ "${{ github.event_name }}" == "create" ]]; then
             REF_TYPE="${{ github.event.ref_type }}"
             REF_NAME="${{ github.event.ref }}"
-            
             MESSAGE="✨ **New ${REF_TYPE} Created!**\n"
             MESSAGE+="**Repository:** `${REPO_NAME}`\n"
             MESSAGE+="**Created by:** `${ACTOR}`"
@@ -75,9 +62,7 @@ jobs:
             PR_NUMBER="${{ github.event.pull_request.number }}"
             PR_URL="${{ github.event.pull_request.html_url }}"
             PR_MERGED="${{ github.event.pull_request.merged }}"
-            
             STATUS_TEXT="opened"
-            
             if [[ "$PR_ACTION" == "closed" ]]; then
               if [[ "$PR_MERGED" == "true" ]]; then
                 MESSAGE="🎉 **Pull Request Merged!**\n"
@@ -91,7 +76,6 @@ jobs:
             elif [[ "$PR_ACTION" == "reopened" ]]; then
               MESSAGE="🔄 **Pull Request Reopened!**\n"
             fi
-            
             MESSAGE+="**PR #${PR_NUMBER}:** `${PR_TITLE}`\n"
             MESSAGE+="**Repository:** `${REPO_NAME}`\n"
             MESSAGE+="**Status:** `${STATUS_TEXT}` by `${ACTOR}`\n"
@@ -101,20 +85,17 @@ jobs:
             WORKFLOW_NAME="${{ github.event.workflow_run.name }}"
             WORKFLOW_STATUS="${{ github.event.workflow_run.conclusion }}"
             WORKFLOW_URL="${{ github.event.workflow_run.html_url }}"
-            
             STATUS_EMOJI="🟡"
-            
             if [[ "$WORKFLOW_STATUS" == "success" ]]; then
               MESSAGE="✅ **Workflow Completed Successfully!**\n"
               STATUS_EMOJI="✅"
             elif [[ "$WORKFLOW_STATUS" == "failure" ]]; then
-              MESSAGE="🚨 **Workflow Failed!** ${MENTION}\n" # Add mention for failures
+              MESSAGE="🚨 **Workflow Failed!** ${MENTION}\n"
               STATUS_EMOJI="❌"
             elif [[ "$WORKFLOW_STATUS" == "cancelled" ]]; then
               MESSAGE="🚫 **Workflow Cancelled!**\n"
               STATUS_EMOJI="🚫"
             fi
-            
             MESSAGE+="${STATUS_EMOJI} **Workflow:** `${WORKFLOW_NAME}`\n"
             MESSAGE+="**Repository:** `${REPO_NAME}`\n"
             MESSAGE+="**Status:** `${WORKFLOW_STATUS}`\n"
@@ -122,14 +103,12 @@ jobs:
             MESSAGE+="[View Run](${WORKFLOW_URL})"
           fi
 
-          # Set outputs for the next step
           echo "::set-output name=message::$MESSAGE"
-        shell: bash
 
       - name: Send Discord Notification
-        uses: Ilshidur/action-discord@master # Using the action you prefer
-        if: steps.set_message.outputs.message != '' # Only send if a message was generated
+        uses: Ilshidur/action-discord@master
+        if: steps.set_message.outputs.message != ''
         env:
-          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL_CUSTOM }} # Pass the full webhook URL as an environment variable
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL_CUSTOM }}
         with:
-          args: ${{ steps.set_message.outputs.message }} # Main message content
+          args: ${{ steps.set_message.outputs.message }}
