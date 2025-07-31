@@ -121,6 +121,6 @@ jobs:
         uses: Ilshidur/action-discord@master
         if: steps.set_message.outputs.message != ''
         env:
-          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL_CUSTOM }}
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL_ACTIONS }}
         with:
           args: ${{ steps.set_message.outputs.message }}
