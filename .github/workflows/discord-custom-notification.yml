@@ -25,25 +25,29 @@ jobs:
       actions: read  # Crucial: Allows this workflow to read data from other workflow runs
 
     steps:
+      # We don't need actions/checkout here unless we're reading files from the repo
+      # for the notification logic itself. For event-based notifications, it's not strictly necessary.
+      # - name: Checkout code
+      #   uses: actions/checkout@v4
+
       - name: Determine Notification Message
         id: set_message # Give this step an ID to reference its outputs
         run: |
           # Initialize variables
           MESSAGE=""
-          # EMBEDS="[]" # Removed as Ilshidur/action-discord@master doesn't support direct embeds input
 
           # --- Common Variables ---
+          # Use raw github context for direct access, less chance of misinterpretation
           REPO_NAME="${{ github.repository }}"
           ACTOR="${{ github.actor }}"
           RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           
-          # Hardcoded Discord User ID for mentions (replace with your actual ID)
+          # Hardcoded Discord User ID for mentions
           DISCORD_USER_ID="1015923238674640896" 
           MENTION="<@${DISCORD_USER_ID}>"
 
           # --- Handle different event types ---
           if [[ "${{ github.event_name }}" == "push" ]]; then
-            # Extract commit details for push events
             COMMIT_MESSAGE="${{ github.event.head_commit.message }}"
             COMMIT_SHA_SHORT="${{ github.sha }}"
             BRANCH_NAME="${{ github.ref_name }}"
@@ -56,7 +60,6 @@ jobs:
             MESSAGE+="**Commit:** `${COMMIT_SHA_SHORT}`\n"
             MESSAGE+="**Message:** ```\n${COMMIT_MESSAGE}\n```\n"
             MESSAGE+="[View Changes](${COMPARE_URL})"
-            # EMBEDS logic removed for this action
 
           elif [[ "${{ github.event_name }}" == "create" ]]; then
             REF_TYPE="${{ github.event.ref_type }}"
@@ -65,7 +68,6 @@ jobs:
             MESSAGE="✨ **New ${REF_TYPE} Created!**\n"
             MESSAGE+="**Repository:** `${REPO_NAME}`\n"
             MESSAGE+="**Created by:** `${ACTOR}`"
-            # EMBEDS logic removed for this action
 
           elif [[ "${{ github.event_name }}" == "pull_request" ]]; then
             PR_ACTION="${{ github.event.action }}"
@@ -94,7 +96,6 @@ jobs:
             MESSAGE+="**Repository:** `${REPO_NAME}`\n"
             MESSAGE+="**Status:** `${STATUS_TEXT}` by `${ACTOR}`\n"
             MESSAGE+="[View PR](${PR_URL})"
-            # EMBEDS logic removed for this action
 
           elif [[ "${{ github.event_name }}" == "workflow_run" ]]; then
             WORKFLOW_NAME="${{ github.event.workflow_run.name }}"
@@ -119,12 +120,10 @@ jobs:
             MESSAGE+="**Status:** `${WORKFLOW_STATUS}`\n"
             MESSAGE+="**Triggered by:** `${ACTOR}`\n"
             MESSAGE+="[View Run](${WORKFLOW_URL})"
-            # EMBEDS logic removed for this action
           fi
 
           # Set outputs for the next step
           echo "::set-output name=message::$MESSAGE"
-          # echo "::set-output name=embeds::$EMBEDS" # Removed output for embeds
         shell: bash
 
       - name: Send Discord Notification
@@ -134,4 +133,3 @@ jobs:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL_CUSTOM }} # Pass the full webhook URL as an environment variable
         with:
           args: ${{ steps.set_message.outputs.message }} # Main message content
-          # embeds: ${{ steps.set_message.outputs.embeds }} # Removed as it's not supported by this action
