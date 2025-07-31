@@ -1,3 +1,31 @@
+name: Custom Discord Notifications
+
+on:
+  push:
+    branches: ['**']
+    paths-ignore:
+      - '*.md'
+      - '.gitignore'
+      - 'docs/'
+      - 'README.md'
+  create:
+  pull_request:
+    types: [opened, closed, reopened]
+  workflow_run:
+    types: [completed]
+    workflows: ["Deploy to EC2"]
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
       - name: Determine Notification Message
         id: set_message
         run: |
@@ -89,3 +117,6 @@
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
         with:
           args: ${{ steps.set_message.outputs.message }}
+
+      - name: Post Checkout repository
+        run: echo "Repository checkout completed"
