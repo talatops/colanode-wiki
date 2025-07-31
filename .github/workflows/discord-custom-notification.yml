@@ -126,7 +126,7 @@ jobs:
         shell: bash
 
       - name: Send Discord Notification
-        uses: Ilshidur/action-discord@0.11.0
+        uses: Ilshidur/action-discord@master
         if: steps.set_message.outputs.message != ''
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL_CUSTOM }}
