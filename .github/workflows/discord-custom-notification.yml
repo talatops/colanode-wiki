@@ -12,32 +12,31 @@ on:
   pull_request:
     types: [opened, closed, reopened]
   workflow_run:
-    types: [completed]
-    # --- FIX: Specify which workflows to listen for ---
     workflows: ["Deploy to EC2"]
+    types: [completed]
 
 jobs:
   notify:
     runs-on: ubuntu-latest
-    # --- IMPORTANT: Add permissions for workflow_run ---
     permissions:
       contents: read
       actions: read
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Determine Notification Message
         id: set_message
         run: |
+          # Initialize MESSAGE as an empty string
           MESSAGE=""
 
           REPO_NAME="${{ github.repository }}"
           ACTOR="${{ github.actor }}"
           RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           
-          DISCORD_USER_ID="1015923238674640896" 
+          DISCORD_USER_ID="1015923238674640896"
           MENTION="<@${DISCORD_USER_ID}>"
 
           if [[ "${{ github.event_name }}" == "push" ]]; then
@@ -46,20 +45,28 @@ jobs:
             BRANCH_NAME="${{ github.ref_name }}"
             COMPARE_URL="${{ github.event.compare }}"
 
-            MESSAGE="📢 **Code Push Alert!** $MENTION\n"
-            MESSAGE+="**Repository:** $REPO_NAME\n"
-            MESSAGE+="**Branch:** $BRANCH_NAME\n"
-            MESSAGE+="**Pushed by:** $ACTOR\n"
-            MESSAGE+="**Commit:** [$COMMIT_SHA_SHORT]($RUN_URL)\n"
-            MESSAGE+="**Message:** \`\`\`\n${COMMIT_MESSAGE}\n\`\`\`"
+            MESSAGE=$(cat <<EOF
+📢 **Code Push Alert!** $MENTION
+**Repository:** $REPO_NAME
+**Branch:** $BRANCH_NAME
+**Pushed by:** $ACTOR
+**Commit:** [$COMMIT_SHA_SHORT]($RUN_URL)
+**Message:** \`\`\`
+${COMMIT_MESSAGE}
+\`\`\`
+EOF
+)
 
           elif [[ "${{ github.event_name }}" == "create" ]]; then
             REF_TYPE="${{ github.event.ref_type }}"
             REF_NAME="${{ github.event.ref }}"
             
-            MESSAGE="✨ **New ${REF_TYPE} Created!** $MENTION\n"
-            MESSAGE+="**Repository:** $REPO_NAME\n"
-            MESSAGE+="**Created by:** $ACTOR"
+            MESSAGE=$(cat <<EOF
+✨ **New ${REF_TYPE} Created!** $MENTION
+**Repository:** $REPO_NAME
+**Created by:** $ACTOR
+EOF
+)
 
           elif [[ "${{ github.event_name }}" == "pull_request" ]]; then
             PR_ACTION="${{ github.event.action }}"
@@ -72,22 +79,26 @@ jobs:
             
             if [[ "$PR_ACTION" == "closed" ]]; then
               if [[ "$PR_MERGED" == "true" ]]; then
-                MESSAGE="🎉 **Pull Request Merged!** $MENTION\n"
                 STATUS_TEXT="merged"
+                MESSAGE="🎉 **Pull Request Merged!** $MENTION"
               else
-                MESSAGE="❌ **Pull Request Closed!** $MENTION\n"
                 STATUS_TEXT="closed"
+                MESSAGE="❌ **Pull Request Closed!** $MENTION"
               fi
             elif [[ "$PR_ACTION" == "opened" ]]; then
-              MESSAGE="🆕 **New Pull Request!** $MENTION\n"
+              MESSAGE="🆕 **New Pull Request!** $MENTION"
             elif [[ "$PR_ACTION" == "reopened" ]]; then
-              MESSAGE="🔄 **Pull Request Reopened!** $MENTION\n"
+              MESSAGE="🔄 **Pull Request Reopened!** $MENTION"
             fi
             
-            MESSAGE+="**PR #${PR_NUMBER}:** $PR_TITLE\n"
-            MESSAGE+="**Repository:** $REPO_NAME\n"
-            MESSAGE+="**Status:** $STATUS_TEXT by $ACTOR\n"
-            MESSAGE+="[View PR]($PR_URL)"
+            MESSAGE=$(cat <<EOF
+${MESSAGE}
+**PR #${PR_NUMBER}:** $PR_TITLE
+**Repository:** $REPO_NAME
+**Status:** $STATUS_TEXT by $ACTOR
+[View PR]($PR_URL)
+EOF
+)
 
           elif [[ "${{ github.event_name }}" == "workflow_run" ]]; then
             WORKFLOW_NAME="${{ github.event.workflow_run.name }}"
@@ -97,30 +108,34 @@ jobs:
             STATUS_EMOJI="🟡"
             
             if [[ "$WORKFLOW_STATUS" == "success" ]]; then
-              MESSAGE="✅ **Workflow Completed Successfully!** $MENTION\n"
+              MESSAGE="✅ **Workflow Completed Successfully!** $MENTION"
               STATUS_EMOJI="✅"
             elif [[ "$WORKFLOW_STATUS" == "failure" ]]; then
-              MESSAGE="🚨 **Workflow Failed!** $MENTION\n"
+              MESSAGE="🚨 **Workflow Failed!** $MENTION"
               STATUS_EMOJI="❌"
             elif [[ "$WORKFLOW_STATUS" == "cancelled" ]]; then
-              MESSAGE="🚫 **Workflow Cancelled!** $MENTION\n"
+              MESSAGE="🚫 **Workflow Cancelled!** $MENTION"
               STATUS_EMOJI="🚫"
             fi
             
-            MESSAGE+="$STATUS_EMOJI **Workflow:** $WORKFLOW_NAME\n"
-            MESSAGE+="**Repository:** $REPO_NAME\n"
-            MESSAGE+="**Status:** $WORKFLOW_STATUS\n"
-            MESSAGE+="**Triggered by:** $ACTOR\n"
-            MESSAGE+="[View Run]($WORKFLOW_URL)"
+            MESSAGE=$(cat <<EOF
+${MESSAGE}
+${STATUS_EMOJI} **Workflow:** $WORKFLOW_NAME
+**Repository:** $REPO_NAME
+**Status:** $WORKFLOW_STATUS
+**Triggered by:** $ACTOR
+[View Run]($WORKFLOW_URL)
+EOF
+)
           fi
 
-          echo "::set-output name=message::$MESSAGE"
+          echo "message=$MESSAGE" >> $GITHUB_OUTPUT
         shell: bash
 
       - name: Send Discord Notification
-        uses: Ilshidur/action-discord@master
+        uses: Ilshidur/action-discord@0.11.0
         if: steps.set_message.outputs.message != ''
         env:
-          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL_ACTIONS }}
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL_CUSTOM }}
         with:
           args: ${{ steps.set_message.outputs.message }}
