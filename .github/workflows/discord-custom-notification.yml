@@ -1,0 +1,172 @@
+name: Custom Discord Notifications
+
+on:
+  push:
+    branches: ['**']
+    paths-ignore:
+      - '*.md'
+      - '.gitignore'
+      - 'docs/'
+      - 'README.md'
+  create:
+  pull_request:
+    types: [opened, closed, reopened]
+  workflow_run:
+    types: [completed]
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Determine Notification Message
+        id: set_message 
+        run: |
+          # Initialize variables
+          MESSAGE=""
+          EMBEDS="[]"
+
+        
+          REPO_NAME="${{ github.repository }}"
+          ACTOR="${{ github.actor }}"
+          RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+        
+          # You can also set this as a repository secret and use ${{ secrets.YOUR_DISCORD_USER_ID }}
+          DISCORD_USER_ID="1015923238674640896" 
+          MENTION="<@${DISCORD_USER_ID}>"
+
+          # --- Handle different event types ---
+          if [[ "${{ github.event_name }}" == "push" ]]; then
+            # Extract commit details for push events
+            COMMIT_MESSAGE="${{ github.event.head_commit.message }}"
+            COMMIT_SHA_SHORT="${{ github.sha }}"
+            BRANCH_NAME="${{ github.ref_name }}"
+            COMPARE_URL="${{ github.event.compare }}"
+
+            MESSAGE="📢 **Code Push Alert!**"
+            EMBEDS=$(jq -n \
+              --arg repo "$REPO_NAME" \
+              --arg branch "$BRANCH_NAME" \
+              --arg actor "$ACTOR" \
+              --arg commit_msg "$COMMIT_MESSAGE" \
+              --arg commit_sha "$COMMIT_SHA_SHORT" \
+              --arg compare_url "$COMPARE_URL" \
+              '{
+                "title": "New Push to $branch",
+                "description": "**Repository:** `$repo`\n**Branch:** `$branch`\n**Pushed by:** `$actor`\n**Commit:** `$commit_sha`\n**Message:** ```\n$commit_msg\n```",
+                "url": "$compare_url",
+                "color": 5814783, # Blue color
+                "footer": {"text": "GitHub Push Notification"}
+              }' | jq -s '.') # jq -s '.' wraps the object in an array
+
+          elif [[ "${{ github.event_name }}" == "create" ]]; then
+            REF_TYPE="${{ github.event.ref_type }}"
+            REF_NAME="${{ github.event.ref }}"
+            
+            MESSAGE="✨ **New ${REF_TYPE} Created!**"
+            EMBEDS=$(jq -n \
+              --arg repo "$REPO_NAME" \
+              --arg ref_type "$REF_TYPE" \
+              --arg ref_name "$REF_NAME" \
+              --arg actor "$ACTOR" \
+              '{
+                "title": "New ${ref_type}: ${ref_name}",
+                "description": "**Repository:** `$repo`\n**Created by:** `$actor`",
+                "color": 3066993, # Green color
+                "footer": {"text": "GitHub Creation Notification"}
+              }' | jq -s '.')
+
+          elif [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            PR_ACTION="${{ github.event.action }}"
+            PR_TITLE="${{ github.event.pull_request.title }}"
+            PR_NUMBER="${{ github.event.pull_request.number }}"
+            PR_URL="${{ github.event.pull_request.html_url }}"
+            PR_MERGED="${{ github.event.pull_request.merged }}"
+            
+            COLOR=16776960 # Yellow for opened/reopened
+            STATUS_TEXT="opened"
+            
+            if [[ "$PR_ACTION" == "closed" ]]; then
+              if [[ "$PR_MERGED" == "true" ]]; then
+                MESSAGE="🎉 **Pull Request Merged!**"
+                COLOR=3066993 # Green for merged
+                STATUS_TEXT="merged"
+              else
+                MESSAGE="❌ **Pull Request Closed!**"
+                COLOR=15158332 # Red for closed (unmerged)
+                STATUS_TEXT="closed"
+              fi
+            elif [[ "$PR_ACTION" == "opened" ]]; then
+              MESSAGE="🆕 **New Pull Request!**"
+            elif [[ "$PR_ACTION" == "reopened" ]]; then
+              MESSAGE="🔄 **Pull Request Reopened!**"
+            fi
+
+            EMBEDS=$(jq -n \
+              --arg repo "$REPO_NAME" \
+              --arg pr_title "$PR_TITLE" \
+              --arg pr_number "$PR_NUMBER" \
+              --arg pr_url "$PR_URL" \
+              --arg actor "$ACTOR" \
+              --arg status_text "$STATUS_TEXT" \
+              --argjson color "$COLOR" \
+              '{
+                "title": "PR #${pr_number}: ${pr_title}",
+                "description": "**Repository:** `$repo`\n**Status:** `${status_text}` by `$actor`",
+                "url": "$pr_url",
+                "color": $color,
+                "footer": {"text": "GitHub Pull Request Notification"}
+              }' | jq -s '.')
+
+          elif [[ "${{ github.event_name }}" == "workflow_run" ]]; then
+            WORKFLOW_NAME="${{ github.event.workflow_run.name }}"
+            WORKFLOW_STATUS="${{ github.event.workflow_run.conclusion }}"
+            WORKFLOW_URL="${{ github.event.workflow_run.html_url }}"
+            
+            COLOR=16776960 # Default yellow
+            STATUS_EMOJI="🟡"
+            
+            if [[ "$WORKFLOW_STATUS" == "success" ]]; then
+              MESSAGE="✅ **Workflow Completed Successfully!**"
+              COLOR=3066993 # Green
+              STATUS_EMOJI="✅"
+            elif [[ "$WORKFLOW_STATUS" == "failure" ]]; then
+              MESSAGE="🚨 **Workflow Failed!** ${MENTION}"
+              COLOR=15158332 # Red
+              STATUS_EMOJI="❌"
+            elif [[ "$WORKFLOW_STATUS" == "cancelled" ]]; then
+              MESSAGE="🚫 **Workflow Cancelled!**"
+              COLOR=9807270 # Grey
+              STATUS_EMOJI="🚫"
+            fi
+
+            EMBEDS=$(jq -n \
+              --arg repo "$REPO_NAME" \
+              --arg workflow_name "$WORKFLOW_NAME" \
+              --arg workflow_status "$WORKFLOW_STATUS" \
+              --arg workflow_url "$WORKFLOW_URL" \
+              --arg actor "$ACTOR" \
+              --arg status_emoji "$STATUS_EMOJI" \
+              --argjson color "$COLOR" \
+              '{
+                "title": "${status_emoji} Workflow: ${workflow_name}",
+                "description": "**Repository:** `$repo`\n**Status:** `${workflow_status}`\n**Triggered by:** `$actor`",
+                "url": "$workflow_url",
+                "color": $color,
+                "footer": {"text": "GitHub Actions Notification"}
+              }' | jq -s '.')
+          fi
+
+          # Set outputs for the next step
+          echo "::set-output name=message::$MESSAGE"
+          echo "::set-output name=embeds::$EMBEDS"
+        shell: bash
+
+      - name: Send Discord Notification
+        uses: Ilshidur/action-discord@master
+        if: steps.set_message.outputs.message != ''
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL_CUSTOM }}
+        with:
+          args: ${{ steps.set_message.outputs.message }}
+          embeds: ${{ steps.set_message.outputs.embeds }}
