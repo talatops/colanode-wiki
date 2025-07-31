@@ -31,43 +31,38 @@ jobs:
         run: |
           # Initialize MESSAGE as an empty string
           MESSAGE=""
-
           REPO_NAME="${{ github.repository }}"
           ACTOR="${{ github.actor }}"
           RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           
           DISCORD_USER_ID="1015923238674640896"
           MENTION="<@${DISCORD_USER_ID}>"
-
           if [[ "${{ github.event_name }}" == "push" ]]; then
             COMMIT_MESSAGE="${{ github.event.head_commit.message }}"
             COMMIT_SHA_SHORT="${{ github.sha }}"
             BRANCH_NAME="${{ github.ref_name }}"
             COMPARE_URL="${{ github.event.compare }}"
-
             MESSAGE=$(cat <<EOF
                 📢 **Code Push Alert!** $MENTION
-                    **Repository:** $REPO_NAME
-                    **Branch:** $BRANCH_NAME
-                    **Pushed by:** $ACTOR
-                    **Commit:** [$COMMIT_SHA_SHORT]($RUN_URL)
-                    **Message:** \`\`\`
-                    ${COMMIT_MESSAGE}
-                    \`\`\`
-                    EOF
-                    )
-
+                **Repository:** $REPO_NAME
+                **Branch:** $BRANCH_NAME
+                **Pushed by:** $ACTOR
+                **Commit:** [$COMMIT_SHA_SHORT]($RUN_URL)
+                **Message:** \`\`\`
+                ${COMMIT_MESSAGE}
+                \`\`\`
+                EOF
+            )
           elif [[ "${{ github.event_name }}" == "create" ]]; then
             REF_TYPE="${{ github.event.ref_type }}"
             REF_NAME="${{ github.event.ref }}"
             
             MESSAGE=$(cat <<EOF
-                  ✨ **New ${REF_TYPE} Created!** $MENTION
-                  **Repository:** $REPO_NAME
-                  **Created by:** $ACTOR
-                  EOF
-                  )
-
+                ✨ **New ${REF_TYPE} Created!** $MENTION
+                **Repository:** $REPO_NAME
+                **Created by:** $ACTOR
+                EOF
+            )
           elif [[ "${{ github.event_name }}" == "pull_request" ]]; then
             PR_ACTION="${{ github.event.action }}"
             PR_TITLE="${{ github.event.pull_request.title }}"
@@ -92,14 +87,13 @@ jobs:
             fi
             
             MESSAGE=$(cat <<EOF
-            ${MESSAGE}
-            **PR #${PR_NUMBER}:** $PR_TITLE
-            **Repository:** $REPO_NAME
-            **Status:** $STATUS_TEXT by $ACTOR
-            [View PR]($PR_URL)
-            EOF
+                ${MESSAGE}
+                **PR #${PR_NUMBER}:** $PR_TITLE
+                **Repository:** $REPO_NAME
+                **Status:** $STATUS_TEXT by $ACTOR
+                [View PR]($PR_URL)
+                EOF
             )
-
           elif [[ "${{ github.event_name }}" == "workflow_run" ]]; then
             WORKFLOW_NAME="${{ github.event.workflow_run.name }}"
             WORKFLOW_STATUS="${{ github.event.workflow_run.conclusion }}"
@@ -119,16 +113,15 @@ jobs:
             fi
             
             MESSAGE=$(cat <<EOF
-            ${MESSAGE}
-            ${STATUS_EMOJI} **Workflow:** $WORKFLOW_NAME
-            **Repository:** $REPO_NAME
-            **Status:** $WORKFLOW_STATUS
-            **Triggered by:** $ACTOR
-            [View Run]($WORKFLOW_URL)
-            EOF
+                ${MESSAGE}
+                ${STATUS_EMOJI} **Workflow:** $WORKFLOW_NAME
+                **Repository:** $REPO_NAME
+                **Status:** $WORKFLOW_STATUS
+                **Triggered by:** $ACTOR
+                [View Run]($WORKFLOW_URL)
+                EOF
             )
           fi
-
           echo "message=$MESSAGE" >> $GITHUB_OUTPUT
         shell: bash
 
