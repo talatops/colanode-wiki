@@ -1,6 +1,4 @@
-name: Custom Discord Notifications
-
-on:
+name: Custom Discord 
   push:
     branches: ['**']
     paths-ignore:
