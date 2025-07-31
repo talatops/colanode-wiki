@@ -1,5 +1,4 @@
-name: Deploy
-
+name: Deploy xyz
 env:
   REMOTE_DIR: /home/ubuntu/colanode
 
