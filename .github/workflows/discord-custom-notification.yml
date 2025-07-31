@@ -49,11 +49,7 @@ jobs:
             COMPARE_URL="${{ github.event.compare }}"
             MESSAGE="📢 **Code Push Alert!**\n"
             MESSAGE+="**Repository:** \"${REPO_NAME}\"\n"
-            MESSAGE+="**Branch:** \"${BRANCH_NAME}\"\n"
-            MESSAGE+="**Pushed by:** \"${ACTOR}\"\n"
-            MESSAGE+="**Commit:** \"${COMMIT_SHA_SHORT}\"\n"
-            MESSAGE+="**Message:** ```\n${COMMIT_MESSAGE}\n```\n"
-            MESSAGE+="[View Changes](\"${COMPARE_URL}\")"
+            MESSAGE+="**Commit:** \"${COMMIT_SHA_SHORT}\"\n" # Simplified for testing
 
           elif [[ "${{ github.event_name }}" == "create" ]]; then
             REF_TYPE="${{ github.event.ref_type }}"
