@@ -13,11 +13,13 @@ on:
     types: [opened, closed, reopened]
   workflow_run:
     types: [completed]
+    # --- FIX: Specify which workflows to listen for ---
     workflows: ["Deploy to EC2"]
 
 jobs:
   notify:
     runs-on: ubuntu-latest
+    # --- IMPORTANT: Add permissions for workflow_run ---
     permissions:
       contents: read
       actions: read
@@ -29,17 +31,13 @@ jobs:
       - name: Determine Notification Message
         id: set_message
         run: |
-          echo "REPO_NAME: ${{ github.repository }}"
-          echo "BRANCH_NAME: ${{ github.ref_name }}"
-          echo "EVENT_NAME: ${{ github.event_name }}"
-          echo "COMMIT_MESSAGE: ${{ github.event.head_commit.message }}"
-          echo "COMMIT_SHA_SHORT: ${{ github.sha }}"
-          echo "COMPARE_URL: ${{ github.event.compare }}"
           MESSAGE=""
+
           REPO_NAME="${{ github.repository }}"
           ACTOR="${{ github.actor }}"
           RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-          DISCORD_USER_ID="1015923238674640896"
+          
+          DISCORD_USER_ID="1015923238674640896" 
           MENTION="<@${DISCORD_USER_ID}>"
 
           if [[ "${{ github.event_name }}" == "push" ]]; then
@@ -47,17 +45,18 @@ jobs:
             COMMIT_SHA_SHORT="${{ github.sha }}"
             BRANCH_NAME="${{ github.ref_name }}"
             COMPARE_URL="${{ github.event.compare }}"
+
             MESSAGE="📢 **Code Push Alert!** $MENTION\n"
             MESSAGE+="**Repository:** $REPO_NAME\n"
             MESSAGE+="**Branch:** $BRANCH_NAME\n"
             MESSAGE+="**Pushed by:** $ACTOR\n"
             MESSAGE+="**Commit:** [$COMMIT_SHA_SHORT]($RUN_URL)\n"
-            # Safely handle COMMIT_MESSAGE as a literal string
-            MESSAGE+="**Message:** ```\"$COMMIT_MESSAGE\"```"
+            MESSAGE+="**Message:** \`\`\`\n${COMMIT_MESSAGE}\n\`\`\`"
 
           elif [[ "${{ github.event_name }}" == "create" ]]; then
             REF_TYPE="${{ github.event.ref_type }}"
             REF_NAME="${{ github.event.ref }}"
+            
             MESSAGE="✨ **New ${REF_TYPE} Created!** $MENTION\n"
             MESSAGE+="**Repository:** $REPO_NAME\n"
             MESSAGE+="**Created by:** $ACTOR"
@@ -68,7 +67,9 @@ jobs:
             PR_NUMBER="${{ github.event.pull_request.number }}"
             PR_URL="${{ github.event.pull_request.html_url }}"
             PR_MERGED="${{ github.event.pull_request.merged }}"
+            
             STATUS_TEXT="opened"
+            
             if [[ "$PR_ACTION" == "closed" ]]; then
               if [[ "$PR_MERGED" == "true" ]]; then
                 MESSAGE="🎉 **Pull Request Merged!** $MENTION\n"
@@ -82,6 +83,7 @@ jobs:
             elif [[ "$PR_ACTION" == "reopened" ]]; then
               MESSAGE="🔄 **Pull Request Reopened!** $MENTION\n"
             fi
+            
             MESSAGE+="**PR #${PR_NUMBER}:** $PR_TITLE\n"
             MESSAGE+="**Repository:** $REPO_NAME\n"
             MESSAGE+="**Status:** $STATUS_TEXT by $ACTOR\n"
@@ -91,7 +93,9 @@ jobs:
             WORKFLOW_NAME="${{ github.event.workflow_run.name }}"
             WORKFLOW_STATUS="${{ github.event.workflow_run.conclusion }}"
             WORKFLOW_URL="${{ github.event.workflow_run.html_url }}"
+            
             STATUS_EMOJI="🟡"
+            
             if [[ "$WORKFLOW_STATUS" == "success" ]]; then
               MESSAGE="✅ **Workflow Completed Successfully!** $MENTION\n"
               STATUS_EMOJI="✅"
@@ -102,6 +106,7 @@ jobs:
               MESSAGE="🚫 **Workflow Cancelled!** $MENTION\n"
               STATUS_EMOJI="🚫"
             fi
+            
             MESSAGE+="$STATUS_EMOJI **Workflow:** $WORKFLOW_NAME\n"
             MESSAGE+="**Repository:** $REPO_NAME\n"
             MESSAGE+="**Status:** $WORKFLOW_STATUS\n"
@@ -110,14 +115,12 @@ jobs:
           fi
 
           echo "::set-output name=message::$MESSAGE"
+        shell: bash
 
       - name: Send Discord Notification
         uses: Ilshidur/action-discord@master
         if: steps.set_message.outputs.message != ''
         env:
-          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL_CUSTOM }}
         with:
           args: ${{ steps.set_message.outputs.message }}
-
-      - name: Post Checkout repository
-        run: echo "Repository checkout completed"
