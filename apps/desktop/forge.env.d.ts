@@ -5,8 +5,7 @@ declare global {
   // plugin that tells the Electron app where to look for the Vite-bundled app code (depending on
   // whether you're running in development or production).
   const MAIN_WINDOW_VITE_DEV_SERVER_URL: string;
-  const MAIN_WINDOW_VITE_NAME: string;
-
+  const MAIN_WINDOW_VITE_NAME: stri
   namespace NodeJS {
     interface Process {
       // Used for hot reload after preload scripts.
