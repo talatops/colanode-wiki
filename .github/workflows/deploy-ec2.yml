@@ -1,5 +1,5 @@
 
-name: n
+name: nbb
 env:
   REMOTE_DIR: /home/ubuntu/colanode
 
