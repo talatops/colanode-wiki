@@ -1,5 +1,4 @@
 {
-  "$schema": "https://json.schemastore.org/package.json",
   "name": "colanode",
   "description": "Colanode monorepo",
   "version": "1.0.0",
