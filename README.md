@@ -8,8 +8,6 @@
 
 Colanode is an all-in-one platform for easy collaboration, built to prioritize your data privacy and control. Designed with a **local-first** approach, it helps teams communicate, organize, and manage projects—whether online or offline. With Colanode, you get the flexibility of modern collaboration tools, plus the peace of mind that comes from owning your data.
 
-### What can you do with Colanode?
-
 - **Real-Time Chat:** Stay connected with instant messaging for teams and individuals.
 - **Rich Text Pages:** Create documents, wikis, and notes using an intuitive editor, similar to Notion.
 - **Customizable Databases:** Organize information with structured data, custom fields and dynamic views (table, kanban, calendar).
