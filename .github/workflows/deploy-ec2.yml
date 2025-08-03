@@ -3,7 +3,7 @@ name: nb
 env:
   REMOTE_DIR: /home/ubuntu/colanode
 
-on:
+o
   push:
     branches: [ main ]
     paths-ignore:
