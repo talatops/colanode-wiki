@@ -1,6 +1,5 @@
 
-env:
-  REMOTE_DIR: /home/ukjnkj
+
 
 on:
   push:
