@@ -1,7 +1,7 @@
 
 name: d
 env:
-  REMOTE_DIR: /home/ubuntu/colanode
+  REMOTE_DIR: /home/ubuntu/cola
 
 on:
   push:
