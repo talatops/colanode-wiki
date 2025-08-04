@@ -1,6 +1,6 @@
 
 env:
-  REMOTE_DIR: /home/u
+  REMOTE_DIR: /home/ukjnkj
 
 on:
   push:
