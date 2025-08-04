@@ -1,6 +1,6 @@
 
 name: de
-env:
+en
   REMOTE_DIR: /home/ubuntu/colanode
 
 on:
