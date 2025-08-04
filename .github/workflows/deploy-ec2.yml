@@ -1,8 +1,4 @@
-
-  deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
+ode
         uses: actions/checkout@v4
 
       - name: Set up environment
