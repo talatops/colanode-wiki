@@ -1,7 +1,4 @@
-ode
-        uses: actions/checkout@v4
-
-      - name: Set up environment
+t
         run: |
           echo "${{ secrets.EC2_ENV }}" > .env
       
