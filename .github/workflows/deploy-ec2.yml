@@ -1,6 +1,6 @@
 
 env:
-  REMOTE_DIR: /home/ubuntu/colanode
+  REMOTE_DIR: /home/u
 
 on:
   push:
