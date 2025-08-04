@@ -1,10 +1,4 @@
-ode
-        uses: actions/checkout@v4
 
-      - name: Set up environment
-        run: |
-          echo "${{ secrets.EC2_ENV }}" > .env
-      
       - name: Setup SSH
         run: |
           mkdir -p ~/.ssh
