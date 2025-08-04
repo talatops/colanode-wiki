@@ -1,11 +1,10 @@
 
-name: deded
 env:
   REMOTE_DIR: /home/ubuntu/colanode
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main 
     paths-ignore:
       - '*.md'
       - '.gitignore'
