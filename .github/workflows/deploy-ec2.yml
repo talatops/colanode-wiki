@@ -1,13 +1,6 @@
 
 
-      - name: Set up environment
-        run: |
-          echo "${{ secrets.EC2_ENV }}" > .env
-      
-      - name: Setup SSH
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.EC2_KEY }}" > ~/.ssh/id_rsa
+ cvdvdf.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
 
