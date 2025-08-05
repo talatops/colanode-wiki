@@ -1,7 +1,4 @@
-H
-
-      - name: Cleanup SSH key and .env file
-        if: always() # This step will always run, even if previous steps fail
+even if previous steps fail
         run: |
           # Remove sensitive files from the runner after the job completes
           rm -f ~/.ssh/id_rsa
