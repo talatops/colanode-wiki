@@ -1,9 +1,5 @@
 
-
- cvdvdf.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
-
+ed
       - name: Prepare and copy files
         run: |
           # Create the remote directory if it doesn't exist
