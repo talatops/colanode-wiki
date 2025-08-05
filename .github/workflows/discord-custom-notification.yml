@@ -1,11 +1,4 @@
-name: Custom Discord 
-  push:
-    branches: ['**']
-    paths-ignore:
-      - '*.md'
-      - '.gitignore'
-      - 'docs/'
-      - 'README.md'
+
   create:
   pull_request:
     types: [opened, closed, reopened]
