@@ -1,14 +1,4 @@
-emdkwkmed
-      - name: Deploy
-        run: |
-          # Connect to EC2 and execute deployment commands
-          ssh -i ~/.ssh/id_rsa ubuntu@${{ secrets.EC2_HOST }} << 'ENDSSH'
-          cd ${{ env.REMOTE_DIR }}
-          # Stop and remove existing Docker containers
-          docker-compose down --remove-orphans
-          # Build and start new Docker containers in detached mode
-          docker-compose up -d --build
-          ENDSSH
+H
 
       - name: Cleanup SSH key and .env file
         if: always() # This step will always run, even if previous steps fail
