@@ -70,6 +70,6 @@ jobs:
             **Branch:** `${{ github.ref_name }}`
             **Commit:** `${{ github.sha }}`
             **Triggered by:** `${{ github.actor }}`
-            **Run URL:** [View Action Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            **Run URL:** <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}>
             Please investigate immediately! <@1015923238674640896>
 
