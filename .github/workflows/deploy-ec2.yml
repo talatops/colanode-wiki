@@ -20,7 +20,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up environme
+      - name: Set up environ
         run: |
           echo "${{ secrets.EC2_ENV }}" > .env
       
